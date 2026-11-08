@@ -15,6 +15,8 @@
     --muted: #5b6785;
     --line: #c9d1e3;
     --stitch: #e4572e;
+    --good: #1b7f4b;
+    --bad: #c0392b;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
@@ -25,6 +27,8 @@
       --muted: #93a0bd;
       --line: #2c3c5e;
       --stitch: #ff8a5c;
+      --good: #5fd39a;
+      --bad: #ff8d7e;
       color-scheme: dark;
     }
   }
@@ -52,7 +56,7 @@
   }
   .stitch { border: 0; border-top: 3px dashed var(--stitch); margin: clamp(10px, 2.5vh, 24px) 0; flex: none; }
 
-  /* groups fill the remaining height */
+  /* home */
   #groups {
     flex: 1; min-height: 0;
     display: grid;
@@ -80,10 +84,11 @@
     transition: border-color .15s, transform .15s;
   }
   .tile:hover { border: 1.5px solid var(--stitch); transform: translateY(-2px); }
-  .tile:focus-visible, .back:focus-visible { outline: 3px solid var(--stitch); outline-offset: 2px; }
+  .tile:focus-visible, .back:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--stitch); outline-offset: 2px; }
   .tile b { display: block; font-size: clamp(1rem, 2.4vh, 1.2rem); margin-bottom: 4px; }
   .tile span { color: var(--muted); font-size: clamp(.8rem, 1.8vh, .95rem); line-height: 1.3; }
 
+  /* tile screens */
   .back {
     font: inherit; background: none; border: 0; color: var(--muted);
     cursor: pointer; padding: 0; margin-bottom: 12px; font-size: 1rem; align-self: flex-start;
@@ -95,16 +100,43 @@
     border: 1.5px dashed var(--line); border-radius: 14px;
     padding: 24px; color: var(--muted);
   }
+  .panel {
+    flex: 1; min-height: 0; overflow: auto;
+    display: grid; grid-template-columns: 1fr 1fr; gap: clamp(16px, 3vw, 36px);
+    align-content: start;
+  }
+  .panel h3 { margin: 0 0 12px; font-size: 1.05rem; font-weight: 600; }
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field label { display: block; font-size: .88rem; color: var(--muted); margin-bottom: 4px; }
+  .field input {
+    width: 100%; font: inherit; color: var(--ink); background: var(--surface);
+    border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 12px;
+  }
+  .field.wide { grid-column: 1 / -1; }
+  .check { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .92rem; grid-column: 1 / -1; }
+  .card {
+    background: var(--surface); border: 1.5px dashed var(--line);
+    border-radius: 14px; padding: 18px 20px;
+  }
+  .price { font-size: clamp(2.2rem, 8vh, 3.6rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
+  .row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); }
+  .row:first-of-type { border-top: 0; }
+  .row span:first-child { color: var(--muted); }
+  .good { color: var(--good); font-weight: 600; }
+  .bad { color: var(--bad); font-weight: 600; }
+  .note { color: var(--muted); font-size: .9rem; margin: 10px 0 0; }
+  .stack { display: grid; gap: 16px; align-content: start; }
+
   [hidden] { display: none !important; }
   @media (prefers-reduced-motion: reduce) { .tile { transition: none; } }
 
-  /* narrow screens: tiles in 2 columns, no descriptions, still no scroll */
   @media (max-width: 720px) {
     #groups { grid-template-columns: 1fr; gap: 8px; }
     .group { display: flex; flex-direction: row; flex-wrap: wrap; align-items: stretch; gap: 8px; }
     .group h2 { width: 100%; }
     .tile { flex: 1 1 calc(50% - 4px); padding: 8px 12px; }
     .tile span { display: none; }
+    .panel { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -124,7 +156,7 @@
     <button class="back" id="back">&larr; Back</button>
     <h1 id="viewTitle"></h1>
     <hr class="stitch">
-    <div class="empty" id="viewBody">Not connected yet.</div>
+    <div id="viewBody"></div>
   </section>
 
 </main>
@@ -186,17 +218,100 @@
     groupsEl.appendChild(wrap);
   });
 
+  // ---- Helpers ----
+  const rupee = n => "₹" + Math.round(n).toLocaleString("en-IN");
+  const num = id => parseFloat(document.getElementById(id).value) || 0;
+
+  // ---- Screen: Price calculator ----
+  function renderPriceCalculator(el) {
+    el.className = "panel";
+    el.innerHTML = `
+      <div>
+        <h3>Your costs for one piece</h3>
+        <div class="fields">
+          <div class="field"><label for="c-cost">Product cost (₹)</label><input id="c-cost" type="number" inputmode="decimal" min="0" value="400"></div>
+          <div class="field"><label for="c-pack">Packaging (₹)</label><input id="c-pack" type="number" inputmode="decimal" min="0" value="25"></div>
+          <div class="field"><label for="c-ship">Shipping you pay (₹)</label><input id="c-ship" type="number" inputmode="decimal" min="0" value="60"></div>
+          <div class="field"><label for="c-fee">Payment fee (%)</label><input id="c-fee" type="number" inputmode="decimal" min="0" value="0"></div>
+          <div class="field"><label for="c-margin">Margin you want (%)</label><input id="c-margin" type="number" inputmode="decimal" min="0" max="95" value="50"></div>
+          <label class="check"><input id="c-round" type="checkbox" checked> Round the price up to end in 9</label>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <div class="row"><span>Selling price</span></div>
+          <div class="price" id="r-price"></div>
+          <div class="row"><span>Total cost</span><span id="r-cost"></span></div>
+          <div class="row"><span>Profit per piece</span><span id="r-profit"></span></div>
+          <div class="row"><span>Margin</span><span id="r-margin"></span></div>
+          <div class="row"><span>Markup on cost</span><span id="r-markup"></span></div>
+          <p class="note" id="r-note"></p>
+        </div>
+        <div class="card">
+          <h3>Check a price</h3>
+          <div class="field"><label for="c-test">Price you have in mind (₹)</label><input id="c-test" type="number" inputmode="decimal" min="0" placeholder="e.g. 799"></div>
+          <div id="t-out" class="note"></div>
+        </div>
+      </div>`;
+
+    const ids = ["c-cost","c-pack","c-ship","c-fee","c-margin","c-round","c-test"];
+
+    function calc() {
+      const cost = num("c-cost") + num("c-pack") + num("c-ship");
+      const fee = num("c-fee") / 100;
+      const m = num("c-margin") / 100;
+      const denom = 1 - fee - m;
+      const priceEl = document.getElementById("r-price");
+      const note = document.getElementById("r-note");
+
+      if (denom <= 0) {
+        priceEl.textContent = "-";
+        ["r-cost","r-profit","r-margin","r-markup"].forEach(i => document.getElementById(i).textContent = "-");
+        note.textContent = "Margin plus fee must be under 100%. Lower one of them.";
+      } else {
+        let price = cost / denom;
+        if (document.getElementById("c-round").checked) price = Math.ceil((price + 1) / 10) * 10 - 1;
+        const profit = price * (1 - fee) - cost;
+        priceEl.textContent = rupee(price);
+        document.getElementById("r-cost").textContent = rupee(cost);
+        document.getElementById("r-profit").textContent = rupee(profit);
+        document.getElementById("r-margin").textContent = (profit / price * 100).toFixed(1) + "%";
+        document.getElementById("r-markup").textContent = cost ? (profit / cost * 100).toFixed(0) + "%" : "-";
+        note.textContent = "Rounding up can leave you slightly above your target margin.";
+      }
+
+      const test = num("c-test");
+      const out = document.getElementById("t-out");
+      if (test > 0) {
+        const p = test * (1 - fee) - cost;
+        const mg = p / test * 100;
+        out.innerHTML = `At ${rupee(test)} you earn <span class="${p >= 0 ? "good" : "bad"}">${rupee(p)}</span> per piece, a margin of <span class="${p >= 0 ? "good" : "bad"}">${mg.toFixed(1)}%</span>.` + (p < 0 ? " That is a loss." : "");
+      } else {
+        out.textContent = "Type a price to see your profit.";
+      }
+    }
+    ids.forEach(i => document.getElementById(i).addEventListener("input", calc));
+    calc();
+  }
+
+  // ---- Screens that are built so far ----
+  const screens = {
+    "price-calculator": renderPriceCalculator
+  };
+
   // ---- Navigation ----
   const home = document.getElementById("home");
   const view = document.getElementById("view");
+  const body = document.getElementById("viewBody");
   function route() {
     const t = byId[location.hash.slice(1)];
     home.hidden = !!t;
     view.hidden = !t;
-    if (t) {
-      document.getElementById("viewTitle").textContent = t.title;
-      document.getElementById("viewBody").textContent = "This screen is not connected yet.";
-    }
+    if (!t) return;
+    document.getElementById("viewTitle").textContent = t.title;
+    body.className = "empty";
+    body.textContent = "This screen is not connected yet.";
+    if (screens[t.id]) screens[t.id](body);
   }
   document.getElementById("back").onclick = () => { location.hash = ""; };
   window.addEventListener("hashchange", route);
