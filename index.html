@@ -6,78 +6,174 @@
 <title>Srijeet’s Shop</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #eef1f6;
+    --surface: #ffffff;
     --ink: #14213d;
     --muted: #5b6785;
+    --line: #c9d1e3;
     --stitch: #e4572e;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #0f1a2e;
+      --surface: #16233d;
       --ink: #eef1f6;
       --muted: #93a0bd;
+      --line: #2c3c5e;
       --stitch: #ff8a5c;
       color-scheme: dark;
     }
   }
   * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
   body {
+    margin: 0;
     background: var(--bg);
     color: var(--ink);
     font-family: "Bricolage Grotesque", system-ui, sans-serif;
-    display: grid;
-    place-items: center;
-    padding: 24px;
+    padding: 40px 24px 64px;
   }
-  main { width: min(720px, 100%); }
-  .date { color: var(--muted); font-size: 1.05rem; margin: 0 0 14px; }
+  main { width: min(920px, 100%); margin: 0 auto; }
+  .date { color: var(--muted); margin: 0 0 10px; }
   h1 {
-    font-size: clamp(2.6rem, 9vw, 5rem);
-    line-height: 1.04;
+    font-size: clamp(2.2rem, 7vw, 4rem);
+    line-height: 1.05;
     letter-spacing: -0.02em;
-    font-weight: 700;
     margin: 0;
   }
-  .stitch {
-    border: 0;
-    border-top: 3px dashed var(--stitch);
-    margin: 30px 0 14px;
+  .stitch { border: 0; border-top: 3px dashed var(--stitch); margin: 26px 0 32px; }
+
+  h2 { font-size: 1.15rem; margin: 30px 0 12px; font-weight: 600; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 14px;
   }
-  .time { color: var(--muted); margin: 0; }
+  .tile {
+    text-align: left;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    border: 1.5px dashed var(--line);
+    border-radius: 14px;
+    padding: 20px 18px;
+    cursor: pointer;
+    min-height: 112px;
+    transition: border-color .15s, transform .15s;
+  }
+  .tile:hover { border: 1.5px solid var(--stitch); transform: translateY(-2px); }
+  .tile:focus-visible, .back:focus-visible { outline: 3px solid var(--stitch); outline-offset: 2px; }
+  .tile b { display: block; font-size: 1.1rem; margin-bottom: 6px; }
+  .tile span { color: var(--muted); font-size: .92rem; line-height: 1.35; }
+
+  .back {
+    font: inherit; background: none; border: 0; color: var(--muted);
+    cursor: pointer; padding: 0; margin-bottom: 18px; font-size: 1rem;
+  }
+  .back:hover { color: var(--ink); }
+  .view h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); }
+  .empty {
+    border: 1.5px dashed var(--line); border-radius: 14px;
+    padding: 28px; color: var(--muted); margin-top: 24px;
+  }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { .tile { transition: none; } }
 </style>
 </head>
 <body>
 <main>
-  <p class="date" id="date"></p>
-  <h1><span id="greet"></span><br>Srijeet</h1>
-  <hr class="stitch">
-  <p class="time" id="time"></p>
+
+  <!-- HOME -->
+  <section id="home">
+    <p class="date" id="date"></p>
+    <h1><span id="greet"></span><br>Srijeet</h1>
+    <hr class="stitch">
+    <div id="groups"></div>
+  </section>
+
+  <!-- TILE SCREEN -->
+  <section id="view" class="view" hidden>
+    <button class="back" id="back">&larr; Back</button>
+    <h1 id="viewTitle"></h1>
+    <div class="empty" id="viewBody">Not connected yet.</div>
+  </section>
+
 </main>
 
 <script>
-  function update() {
+  // ---- Greeting ----
+  function updateGreeting() {
     const now = new Date();
     const h = now.getHours();
-    let greeting = "Good night";
-    if (h >= 5 && h < 12) greeting = "Good morning";
-    else if (h >= 12 && h < 17) greeting = "Good afternoon";
-    else if (h >= 17 && h < 21) greeting = "Good evening";
-
-    document.getElementById("greet").textContent = greeting + ",";
+    let g = "Good night";
+    if (h >= 5 && h < 12) g = "Good morning";
+    else if (h >= 12 && h < 17) g = "Good afternoon";
+    else if (h >= 17 && h < 21) g = "Good evening";
+    document.getElementById("greet").textContent = g + ",";
     document.getElementById("date").textContent = now.toLocaleDateString("en-IN", {
       weekday: "long", day: "numeric", month: "long"
     });
-    document.getElementById("time").textContent = now.toLocaleTimeString("en-IN", {
-      hour: "numeric", minute: "2-digit"
-    });
   }
-  update();
-  setInterval(update, 30000);
+  updateGreeting();
+  setInterval(updateGreeting, 60000);
+
+  // ---- Tiles ----
+  const groups = [
+    { name: "Stock", tiles: [
+      { id: "add-inventory", title: "Add inventory",  desc: "Log a new drop or restock" },
+      { id: "record-sale",   title: "Record a sale",  desc: "Reduce stock when something sells" },
+      { id: "check-stock",   title: "Check stock",    desc: "See what you have and what is low" }
+    ]},
+    { name: "Money", tiles: [
+      { id: "log-expense",     title: "Log an expense",   desc: "Fabric, packaging, ads, shipping" },
+      { id: "expenses-report", title: "Expenses report",  desc: "Where your money went" },
+      { id: "sales-report",    title: "Sales report",     desc: "Revenue and profit by day or week" }
+    ]},
+    { name: "Smart", tiles: [
+      { id: "ai-analysis", title: "AI analysis",  desc: "Best sellers and restock advice" },
+      { id: "quick-type",  title: "Quick type",   desc: "Type messy notes, AI sorts them" }
+    ]}
+  ];
+
+  const byId = {};
+  const groupsEl = document.getElementById("groups");
+  groups.forEach(g => {
+    const h2 = document.createElement("h2");
+    h2.textContent = g.name;
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    g.tiles.forEach(t => {
+      byId[t.id] = t;
+      const b = document.createElement("button");
+      b.className = "tile";
+      b.innerHTML = "<b></b><span></span>";
+      b.querySelector("b").textContent = t.title;
+      b.querySelector("span").textContent = t.desc;
+      b.onclick = () => { location.hash = t.id; };
+      grid.appendChild(b);
+    });
+    groupsEl.append(h2, grid);
+  });
+
+  // ---- Navigation ----
+  const home = document.getElementById("home");
+  const view = document.getElementById("view");
+  function route() {
+    const t = byId[location.hash.slice(1)];
+    home.hidden = !!t;
+    view.hidden = !t;
+    if (t) {
+      document.getElementById("viewTitle").textContent = t.title;
+      document.getElementById("viewBody").textContent = "This screen is not connected yet.";
+      window.scrollTo(0, 0);
+    }
+  }
+  document.getElementById("back").onclick = () => { location.hash = ""; };
+  window.addEventListener("hashchange", route);
+  route();
 </script>
 </body>
 </html>
