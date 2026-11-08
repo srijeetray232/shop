@@ -59,10 +59,15 @@
     grid-template-columns: repeat(3, 1fr);
     gap: clamp(12px, 2vw, 24px);
   }
-  .group { display: flex; flex-direction: column; min-height: 0; gap: 10px; }
-  .group h2 { font-size: 1rem; margin: 0; font-weight: 600; color: var(--muted); flex: none; }
+  .group {
+    display: grid;
+    grid-template-rows: auto repeat(3, minmax(0, 1fr));
+    min-height: 0;
+    gap: 10px;
+  }
+  .group h2 { font-size: 1rem; margin: 0; font-weight: 600; color: var(--muted); }
   .tile {
-    flex: 1; min-height: 0;
+    min-height: 0;
     text-align: left;
     background: var(--surface);
     color: var(--ink);
@@ -96,7 +101,7 @@
   /* narrow screens: tiles in 2 columns, no descriptions, still no scroll */
   @media (max-width: 720px) {
     #groups { grid-template-columns: 1fr; gap: 8px; }
-    .group { flex-direction: row; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+    .group { display: flex; flex-direction: row; flex-wrap: wrap; align-items: stretch; gap: 8px; }
     .group h2 { width: 100%; }
     .tile { flex: 1 1 calc(50% - 4px); padding: 8px 12px; }
     .tile span { display: none; }
@@ -154,8 +159,7 @@
       { id: "sales-report",    title: "Sales report",     desc: "Revenue and profit by day or week" }
     ]},
     { name: "Smart", tiles: [
-      { id: "ai-analysis", title: "AI analysis",  desc: "Best sellers and restock advice" },
-      { id: "quick-type",  title: "Quick type",   desc: "Type messy notes, AI sorts them" }
+      { id: "ai-analysis", title: "AI analysis",  desc: "Best sellers and restock advice" }
     ]}
   ];
 
