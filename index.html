@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Srijeet’s Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #eef1f6;
+    --ink: #14213d;
+    --muted: #5b6785;
+    --stitch: #e4572e;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1a2e;
+      --ink: #eef1f6;
+      --muted: #93a0bd;
+      --stitch: #ff8a5c;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+  }
+  main { width: min(720px, 100%); }
+  .date { color: var(--muted); font-size: 1.05rem; margin: 0 0 14px; }
+  h1 {
+    font-size: clamp(2.6rem, 9vw, 5rem);
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    margin: 0;
+  }
+  .stitch {
+    border: 0;
+    border-top: 3px dashed var(--stitch);
+    margin: 30px 0 14px;
+  }
+  .time { color: var(--muted); margin: 0; }
+</style>
+</head>
+<body>
+<main>
+  <p class="date" id="date"></p>
+  <h1><span id="greet"></span><br>Srijeet</h1>
+  <hr class="stitch">
+  <p class="time" id="time"></p>
+</main>
+
+<script>
+  function update() {
+    const now = new Date();
+    const h = now.getHours();
+    let greeting = "Good night";
+    if (h >= 5 && h < 12) greeting = "Good morning";
+    else if (h >= 12 && h < 17) greeting = "Good afternoon";
+    else if (h >= 17 && h < 21) greeting = "Good evening";
+
+    document.getElementById("greet").textContent = greeting + ",";
+    document.getElementById("date").textContent = now.toLocaleDateString("en-IN", {
+      weekday: "long", day: "numeric", month: "long"
+    });
+    document.getElementById("time").textContent = now.toLocaleTimeString("en-IN", {
+      hour: "numeric", minute: "2-digit"
+    });
+  }
+  update();
+  setInterval(update, 30000);
+</script>
+</body>
+</html>
